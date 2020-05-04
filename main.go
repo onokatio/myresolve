@@ -40,7 +40,7 @@ type DNSResource struct {
 	NAME []byte
 	TYPE int16
 	CLASS int16
-	TTL int16
+	TTL int32
 	RDLENGTH int16
 	RDATA []byte
 }
