@@ -31,6 +31,9 @@ type DNSHeader struct {
 }
 
 type DNSQuestion struct {
+	QNAME []byte
+	QTYPE int16
+	QCLASS int16
 }
 
 type DNSAnswer struct {
