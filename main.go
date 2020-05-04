@@ -36,21 +36,21 @@ type DNSQuestion struct {
 	QCLASS int16
 }
 
-type DNSAnswer struct {
-}
-
-type DNSAuthority struct {
-}
-
-type DNSAdditional struct {
+type DNSResource struct {
+	NAME []byte
+	TYPE int16
+	CLASS int16
+	TTL int16
+	RDLENGTH int16
+	RDATA []byte
 }
 
 type DNSPacket struct {
 	Header DNSHeader
 	Question DNSQuestion
-	Answer []DNSAnswer
-	Authority []DNSAuthority
-	Additional []DNSAdditional
+	Answer []DNSResource
+	Authority []DNSResource
+	Additional []DNSResource
 }
 
 func main() {
