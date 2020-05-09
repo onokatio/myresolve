@@ -2,10 +2,28 @@ package main
 
 import "fmt"
 import "net"
+import "bytes"
+import "encoding/binary"
+
+//                                    1  1  1  1  1  1
+//      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |                      ID                       |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |                    QDCOUNT                    |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |                    ANCOUNT                    |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |                    NSCOUNT                    |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |                    ARCOUNT                    |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
 type DNSHeader struct {
-	ID int8 // random dns id
-	QR bool // question == 1, answer == 1
+	ID int16 // random dns id
+	QR bool // question == 0, answer == 1
 	Opcode [4]bool // type of question
 	        // 0 == a standard query (QUERY)
 		// 1 == an inverse query (IQUERY)
@@ -57,10 +75,39 @@ func main() {
 	fmt.Println("Hello, onokatio full DNS resolver.")
 	conn, _ := net.Dial("udp", "198.41.0.4:53") // 198.41.0.4 == a.root-servers.net
 	defer conn.Close()
-	var query = []byte{0xa9, 0x4e, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x77, 0x77, 0x77, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x29, 0x05, 0xc8, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00}
+	//var query = []byte{0xa9, 0x4e, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x77, 0x77, 0x77, 0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x29, 0x05, 0xc8, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00}
+	//question := DNSQuestion{
+	//	QNAME: "",
+	//}
+	header := DNSHeader{
+		ID: 0x0f,
+		QR: false,
+		Opcode: [4]bool{false,false,false,false},
+		AA: false,
+		TC: false,
+		RD: false,
+		RA: false,
+		Z: false,
+		RCODE: [4]bool{false,false,false,false},
+		QDCOUNT: 1,
+		ANCOUNT: 0,
+		NSCOUNT: 0,
+		ARCOUNT: 1,
+	}
 
+	rawpacket := new(bytes.Buffer)
 
-	conn.Write(query)
+	err := binary.Write(rawpacket, binary.LittleEndian, &header)
+	if err != nil {
+		panic(err)
+	}
+	err = binary.Write(rawpacket, binary.LittleEndian, []byte("google.com"))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%x", rawpacket.Bytes())
+	conn.Write(rawpacket.Bytes())
 
 	response := make([]byte, 2000)
 	conn.Read(response)
