@@ -33,7 +33,7 @@ type DNSHeader struct {
 	TC bool // TrunCation notify bit
 	RD bool // Recursion query bit
 	RA bool // Recursion available bit
-	Z bool  // Reserved for future use.  Must be zero.
+	Z [3]bool  // Reserved for future use.  Must be zero.
 	RCODE [4]bool // Respon code.
 	              // 0 == No error condition
 		      // 1 == Format error
@@ -79,6 +79,7 @@ func main() {
 	//question := DNSQuestion{
 	//	QNAME: "",
 	//}
+	/*
 	header := DNSHeader{
 		ID: 0x0f,
 		QR: false,
@@ -87,21 +88,25 @@ func main() {
 		TC: false,
 		RD: false,
 		RA: false,
-		Z: false,
+		Z: [3]bool{false,false,false},
 		RCODE: [4]bool{false,false,false,false},
 		QDCOUNT: 1,
 		ANCOUNT: 0,
 		NSCOUNT: 0,
-		ARCOUNT: 1,
+		ARCOUNT: 0,
 	}
+	*/
 
 	rawpacket := new(bytes.Buffer)
 
-	err := binary.Write(rawpacket, binary.LittleEndian, &header)
-	if err != nil {
-		panic(err)
-	}
-	err = binary.Write(rawpacket, binary.LittleEndian, []byte("google.com"))
+	binary.Write(rawpacket, binary.LittleEndian, int16(0x000f))
+	binary.Write(rawpacket, binary.LittleEndian, int8(0x00 | 0x00<<1 | 0x00<<2 | 0x00<<3 | 0x00<<4 | 0x00<<5 | 0x00<<6 | 0x00<<7)) // ID + Opcode + RD
+	binary.Write(rawpacket, binary.LittleEndian, int8(0x00 | 0x00<<1 | 0x00<<2 | 0x00<<3 | 0x00<<4 | 0x00<<5 | 0x00<<6 | 0x00<<7)) // RA + Z + RCODE
+	binary.Write(rawpacket, binary.LittleEndian, int16(0x0001))
+	binary.Write(rawpacket, binary.LittleEndian, int16(0x0000))
+	binary.Write(rawpacket, binary.LittleEndian, int16(0x0000))
+	binary.Write(rawpacket, binary.LittleEndian, int16(0x0000))
+	err := binary.Write(rawpacket, binary.LittleEndian, []byte{0x06, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00} )
 	if err != nil {
 		panic(err)
 	}
